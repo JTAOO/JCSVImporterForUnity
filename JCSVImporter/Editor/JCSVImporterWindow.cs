@@ -100,6 +100,12 @@ public class JCSVImporterWindow : EditorWindow
                 }
             }
         }
+        public Vector2 multi_vec2 = Vector2.one;
+        public Vector3 multi_vec3 = Vector3.one;
+        public Vector4 multi_vec4 = Vector4.one;
+        public Vector2 add_vec2 = Vector2.zero;
+        public Vector3 add_vec3 = Vector3.zero;
+        public Vector4 add_vec4 = Vector4.zero;
 
         public VertexInputParam(VertexInputParamType _paramType, VertexInputParamSize _paramSize)
         {
@@ -110,6 +116,12 @@ public class JCSVImporterWindow : EditorWindow
         public VertexInputParam Clone()
         {
             VertexInputParam newItem = new VertexInputParam(m_paramType, m_paramSize);
+            newItem.multi_vec2 = multi_vec2;
+            newItem.multi_vec3 = multi_vec3;
+            newItem.multi_vec4 = multi_vec4;
+            newItem.add_vec2 = add_vec2;
+            newItem.add_vec3 = add_vec3;
+            newItem.add_vec4 = add_vec4;
             return newItem;
         }
     }
@@ -303,6 +315,21 @@ public class JCSVImporterWindow : EditorWindow
             {
                 inputParam1.ParamSize = newParamSize;
             }
+            if(inputParam1.ParamSize == VertexInputParamSize.float2)
+            {
+                inputParam1.multi_vec2 = EditorGUILayout.Vector2Field(new GUIContent("Multi: ", "Order: \n1. Multi.\n2.Add."), inputParam1.multi_vec2);
+                inputParam1.add_vec2 = EditorGUILayout.Vector2Field(new GUIContent("Add: ", "Order: \n1. Multi.\n2.Add."), inputParam1.add_vec2);
+            }
+            else if (inputParam1.ParamSize == VertexInputParamSize.float3)
+            {
+                inputParam1.multi_vec3 = EditorGUILayout.Vector3Field(new GUIContent("Multi: ", "Order: \n1. Multi.\n2.Add."), inputParam1.multi_vec3);
+                inputParam1.add_vec3 = EditorGUILayout.Vector3Field(new GUIContent("Add: ", "Order: \n1. Multi.\n2.Add."), inputParam1.add_vec3);
+            }
+            else if (inputParam1.ParamSize == VertexInputParamSize.float4)
+            {
+                inputParam1.multi_vec4 = EditorGUILayout.Vector4Field(new GUIContent("Multi: ", "Order: \n1. Multi.\n2.Add."), inputParam1.multi_vec4);
+                inputParam1.add_vec4 = EditorGUILayout.Vector4Field(new GUIContent("Add: ", "Order: \n1. Multi.\n2.Add."), inputParam1.add_vec4);
+            }
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             if(GUILayout.Button("Add After This", GUILayout.Width(200)))
@@ -392,6 +419,7 @@ public class JCSVImporterWindow : EditorWindow
 
                 }
 
+                //init lists
                 int vertCnt = vertexDic.Count;
                 Mesh mesh = new Mesh();
                 VertexData_JCSV listDataTemp = setDatas.Clone();
@@ -446,8 +474,9 @@ public class JCSVImporterWindow : EditorWindow
                     VertexData_JCSV vert = vertexDic[i];
                     for(int j=0; j< listDataTemp.vertexInputs.Count; j++)
                     {
-                        var paramType = listDataTemp.vertexInputs[j].ParamType;
-                        var sizeType = listDataTemp.vertexInputs[j].ParamSize;
+                        VertexInputParam vertexHere = listDataTemp.vertexInputs[j];
+                        var paramType = vertexHere.ParamType;
+                        var sizeType = vertexHere.ParamSize;
                         if (sizeType == VertexInputParamSize.float2)//float2 be uv or color.
                         {
                             if (paramType == VertexInputParamType.Color)//color must use color list.
@@ -455,11 +484,13 @@ public class JCSVImporterWindow : EditorWindow
                                 var listTemp1 = listDataTemp.vertexInputs[j].listColor;
                                 Vector2 ve2 = vert.vertexInputs[j].valueFloat2;
                                 listTemp1[i] = new Color(ve2.x, ve2.y, 0, 1);
+                                listTemp1[i] = ApplyMultiAndAdd(vertexHere, listTemp1[i]);
                             }
                             else
                             {
                                 var listTemp1 = listDataTemp.vertexInputs[j].listFloat2;
                                 listTemp1[i] = vert.vertexInputs[j].valueFloat2;
+                                listTemp1[i] = ApplyMultiAndAdd(vertexHere, listTemp1[i]);
                             }
                           
                         }
@@ -470,6 +501,7 @@ public class JCSVImporterWindow : EditorWindow
                                 var listTemp1 = listDataTemp.vertexInputs[j].listColor;
                                 Vector3 ve3 = vert.vertexInputs[j].valueFloat3;
                                 listTemp1[i] = new Color(ve3.x, ve3.y, ve3.z, 1);
+                                listTemp1[i] = ApplyMultiAndAdd(vertexHere, listTemp1[i]);
                             }
                             else
                             {
@@ -477,8 +509,9 @@ public class JCSVImporterWindow : EditorWindow
                                 listTemp1[i] = vert.vertexInputs[j].valueFloat3;
                                 if (paramType == VertexInputParamType.Position)//position scale
                                 {
-                                    listTemp1[i] /= scale;
+                                    listTemp1[i] *= scale;
                                 }
+                                listTemp1[i] = ApplyMultiAndAdd(vertexHere, listTemp1[i]);
                             }
 
                         }
@@ -490,8 +523,9 @@ public class JCSVImporterWindow : EditorWindow
                                 listTemp1[i] = vert.vertexInputs[j].valueFloat3;
                                 if (paramType == VertexInputParamType.Position)//position scale
                                 {
-                                    listTemp1[i] /= scale;
+                                    listTemp1[i] *= scale;
                                 }
+                                listTemp1[i] = ApplyMultiAndAdd(vertexHere, listTemp1[i]);
                             }
                             else
                             {
@@ -500,11 +534,13 @@ public class JCSVImporterWindow : EditorWindow
                                     var listTemp1 = listDataTemp.vertexInputs[j].listColor;
                                     Vector4 ve4 = vert.vertexInputs[j].valueFloat4;
                                     listTemp1[i] = ve4;
+                                    listTemp1[i] = ApplyMultiAndAdd(vertexHere, listTemp1[i]);
                                 }
                                 else
                                 {
                                     var listTemp1 = listDataTemp.vertexInputs[j].listFloat4;
                                     listTemp1[i] = vert.vertexInputs[j].valueFloat4;
+                                    listTemp1[i] = ApplyMultiAndAdd(vertexHere, listTemp1[i]);
                                 }
                              
                             }
@@ -570,6 +606,88 @@ public class JCSVImporterWindow : EditorWindow
         {
             Debug.Log("Not have a valid csvFile.");
         }
+    }
+
+    private Vector2 ApplyMultiAndAdd(VertexInputParam _param, Vector2 _value)
+    {
+        Vector2 outValue = Vector2.zero;
+        if (_param.ParamSize == VertexInputParamSize.float2)
+        {
+            outValue.x = _value.x * _param.multi_vec2.x + _param.add_vec2.x;
+            outValue.y = _value.y * _param.multi_vec2.y + _param.add_vec2.y;
+        }
+        else
+        {
+            Debug.LogError("JT's Logic Error !");
+        }
+        return outValue;
+    }
+    private Vector3 ApplyMultiAndAdd(VertexInputParam _param, Vector3 _value)
+    {
+        Vector3 outValue = Vector3.zero;
+        if (_param.ParamSize == VertexInputParamSize.float3)
+        {
+            outValue.x = _value.x * _param.multi_vec3.x + _param.add_vec3.x;
+            outValue.y = _value.y * _param.multi_vec3.y + _param.add_vec3.y;
+            outValue.z = _value.z * _param.multi_vec3.z + _param.add_vec3.z;
+        }
+        else if ((_param.ParamType == VertexInputParamType.Position || _param.ParamType == VertexInputParamType.Normal) && _param.ParamSize == VertexInputParamSize.float4)
+        {
+            outValue.x = _value.x * _param.multi_vec4.x + _param.add_vec4.x;
+            outValue.y = _value.y * _param.multi_vec4.y + _param.add_vec4.y;
+            outValue.z = _value.z * _param.multi_vec4.z + _param.add_vec4.z;
+        }
+        else
+        {
+            Debug.LogError("JT's Logic Error !");
+        }
+        return outValue;
+    }
+    private Vector4 ApplyMultiAndAdd(VertexInputParam _param, Vector4 _value)
+    {
+        Vector4 outValue = Vector3.zero;
+        if (_param.ParamSize == VertexInputParamSize.float4)
+        {
+            outValue.x = _value.x * _param.multi_vec4.x + _param.add_vec4.x;
+            outValue.y = _value.y * _param.multi_vec4.y + _param.add_vec4.y;
+            outValue.z = _value.z * _param.multi_vec4.z + _param.add_vec4.z;
+            outValue.w = _value.w * _param.multi_vec4.w + _param.add_vec4.w;
+        }
+        else
+        {
+            Debug.LogError("JT's Logic Error !");
+        }
+        return outValue;
+    }
+    private Color ApplyMultiAndAdd(VertexInputParam _param, Color _value)
+    {
+        Color outValue = Color.black;
+        if (_param.ParamType ==  VertexInputParamType.Color)
+        {
+            if(_param.ParamSize == VertexInputParamSize.float2)
+            {
+                outValue.r = _value.r * _param.multi_vec2.x + _param.add_vec2.x;
+                outValue.g = _value.g * _param.multi_vec2.y + _param.add_vec2.y;
+            }
+            else if(_param.ParamSize == VertexInputParamSize.float3)
+            {
+                outValue.r = _value.r * _param.multi_vec3.x + _param.add_vec3.x;
+                outValue.g = _value.g * _param.multi_vec3.y + _param.add_vec3.y;
+                outValue.b = _value.b * _param.multi_vec3.z + _param.add_vec3.z;
+            }
+            else//float4
+            {
+                outValue.r = _value.r * _param.multi_vec4.x + _param.add_vec4.x;
+                outValue.g = _value.g * _param.multi_vec4.y + _param.add_vec4.y;
+                outValue.b = _value.b * _param.multi_vec4.z + _param.add_vec4.z;
+                outValue.a = _value.a * _param.multi_vec4.w + _param.add_vec4.w;
+            }
+        }
+        else
+        {
+            Debug.LogError("JT's Logic Error !");
+        }
+        return outValue;
     }
 
     private void SaveMeshToAsset(Mesh _mesh)
