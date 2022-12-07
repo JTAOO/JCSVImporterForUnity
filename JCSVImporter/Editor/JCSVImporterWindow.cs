@@ -363,36 +363,51 @@ public class JCSVImporterWindow : EditorWindow
         GUILayout.Space(10);
     }
 
+
+
     private bool AutoFillOne(VertexData_JCSV _setDatasTemp, string _fillItem, string _fillItemParam)
     {
         Debug.Log("AutoFillOne " + _fillItem + "," + _fillItemParam);
         VertexInputParamType fillInputParamType = VertexInputParamType.Position;
         VertexInputParamSize fillInputParamSize = VertexInputParamSize.float4;
-        if (string.Equals(_fillItem, "in_POSITION0"))
+        string[] strs_POSITION = new string[] { "in_POSITION0", "POSITION" };
+        string[] strs_NORMAL = new string[] { "in_NORMAL0", "NORMAL" };
+        string[] strs_TANGENT = new string[] { "in_TANGENT0", "TANGENT" };
+        string[] strs_COLOR = new string[] { "in_COLOR0", "COLOR" };
+        string[] strs_TEXCOORD0 = new string[] { "in_TEXCOORD0", "TEXCOORD0" };
+        string[] strs_TEXCOORD1 = new string[] { "in_TEXCOORD1", "TEXCOORD1" };
+        string[] strs_TEXCOORD2 = new string[] { "in_TEXCOORD2", "TEXCOORD2" };
+        string[] strs_TEXCOORD3 = new string[] { "in_TEXCOORD3", "TEXCOORD3" };
+        string[] strs_TEXCOORD4 = new string[] { "in_TEXCOORD4", "TEXCOORD4" };
+        string[] strs_TEXCOORD5 = new string[] { "in_TEXCOORD5", "TEXCOORD5" };
+        string[] strs_TEXCOORD6 = new string[] { "in_TEXCOORD6", "TEXCOORD6" };
+        string[] strs_TEXCOORD7 = new string[] { "in_TEXCOORD7", "TEXCOORD7" };
+        string[] strs_TEXCOORD8 = new string[] { "in_TEXCOORD8", "TEXCOORD8" };
+        if (new List<string>(strs_POSITION).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.Position;
-        if (string.Equals(_fillItem, "in_NORMAL0"))
+        if (new List<string>(strs_NORMAL).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.Normal;
-        if (string.Equals(_fillItem, "in_TANGENT0"))
+        if (new List<string>(strs_TANGENT).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.Tangent;
-        if (string.Equals(_fillItem, "in_COLOR0"))
+        if (new List<string>(strs_COLOR).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.Color;
-        if (string.Equals(_fillItem, "in_TEXCOORD0"))
+        if (new List<string>(strs_TEXCOORD0).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.UV0;
-        if (string.Equals(_fillItem, "in_TEXCOORD1"))
+        if (new List<string>(strs_TEXCOORD1).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.UV1;
-        if (string.Equals(_fillItem, "in_TEXCOORD2"))
+        if (new List<string>(strs_TEXCOORD2).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.UV2;
-        if (string.Equals(_fillItem, "in_TEXCOORD3"))
+        if (new List<string>(strs_TEXCOORD3).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.UV3;
-        if (string.Equals(_fillItem, "in_TEXCOORD4"))
+        if (new List<string>(strs_TEXCOORD4).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.UV4;
-        if (string.Equals(_fillItem, "in_TEXCOORD5"))
+        if (new List<string>(strs_TEXCOORD5).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.UV5;
-        if (string.Equals(_fillItem, "in_TEXCOORD6"))
+        if (new List<string>(strs_TEXCOORD6).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.UV6;
-        if (string.Equals(_fillItem, "in_TEXCOORD7"))
+        if (new List<string>(strs_TEXCOORD7).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.UV7;
-        if (string.Equals(_fillItem, "in_TEXCOORD8"))
+        if (new List<string>(strs_TEXCOORD8).Contains(_fillItem))
             fillInputParamType = VertexInputParamType.UV8;
         if (string.Equals(_fillItemParam, "x"))
         {
