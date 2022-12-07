@@ -272,9 +272,24 @@ public class JCSVImporterWindow : EditorWindow
         DrawALine(3);
         GUILayout.Space(10);
         GUILayout.Label(" BaseSets", headerStyle);
-        csvFile = EditorGUILayout.ObjectField("CSVFile", csvFile, typeof(TextAsset), true) as TextAsset;
+        csvFile = EditorGUILayout.ObjectField("CSVFile", csvFile, typeof(TextAsset), true, GUILayout.Height(30)) as TextAsset;
         scale = EditorGUILayout.Slider("Scale", scale, 0.001f, 100f);
         EditorGUILayout.LabelField("Primitive Topology: TrangleList", richTextStyle_Left);
+
+        if (csvFile == null)
+        {
+            GUI.enabled = false;
+        }
+        // 自动搜索文件格式填充Inputs
+        if (GUILayout.Button("Auto Fill Inputs", GUILayout.Height(30)))
+        {
+            AutoFillInputs();
+        }
+        if (GUILayout.Button("Import ! ", GUILayout.Height(60)))
+        {
+            StartImport();
+        }
+        GUI.enabled = true;
 
         GUILayout.Space(10);
         DrawALine(3);
@@ -345,21 +360,6 @@ public class JCSVImporterWindow : EditorWindow
 
         GUILayout.Space(10);
         DrawALine(3);
-        GUILayout.Space(10);
-
-        if (csvFile != null)
-        {
-            // 自动搜索文件格式填充Inputs
-            if (GUILayout.Button("Auto Fill Inputs", GUILayout.Height(30)))
-            {
-                AutoFillInputs();
-            }
-        }
-        if (GUILayout.Button("Import ! ", GUILayout.Height(60)))
-        {
-            StartImport();
-        }
-
         GUILayout.Space(10);
     }
 
