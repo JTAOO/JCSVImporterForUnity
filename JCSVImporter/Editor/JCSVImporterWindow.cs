@@ -509,7 +509,22 @@ public class JCSVImporterWindow : EditorWindow
             {
                 Dictionary<int, VertexData_JCSV> vertexDic = new Dictionary<int, VertexData_JCSV>();
                 List<int> indexData = new List<int>();
-                int firstIDX = -1;//
+                int minIDX = -1;//
+                // 找出最小的IDX
+                using (System.IO.StreamReader sr = new System.IO.StreamReader(path))
+                {
+                    string line = sr.ReadLine();
+                    while (!sr.EndOfStream)
+                    {
+                        line = sr.ReadLine();
+                        string[] token = line.Split(',');
+                        int vidx = int.Parse(token[1]);
+                        if(minIDX == -1 || minIDX > vidx)
+                        {
+                            minIDX = vidx;
+                        }
+                    }
+                }
                 using (System.IO.StreamReader sr = new System.IO.StreamReader(path))
                 {
                     string line = sr.ReadLine();
@@ -519,15 +534,7 @@ public class JCSVImporterWindow : EditorWindow
                         string[] token = line.Split(',');
                         //Debug.Log(line);
                         int vidx = int.Parse(token[1]);
-                        if (firstIDX == -1)
-                        {
-                            firstIDX = vidx;
-                            vidx = 0;
-                        }
-                        else
-                        {
-                            vidx = vidx - firstIDX;
-                        }
+                        vidx = vidx - minIDX; // 减去最小的
 
                         indexData.Add(vidx);
                         if (!vertexDic.ContainsKey(vidx))
@@ -737,8 +744,9 @@ public class JCSVImporterWindow : EditorWindow
                         }
                     }
                 }
-                mesh.RecalculateBounds();
                 mesh.triangles = indexData.ToArray();
+                mesh.RecalculateBounds();
+                Debug.Log("minIDX:" + minIDX);
 
                 if (mesh)
                 {
