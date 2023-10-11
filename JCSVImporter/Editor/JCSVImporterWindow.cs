@@ -17,7 +17,7 @@ public class JCSVImporterWindow : EditorWindow
     GUIStyle foldoutWithRichText;
 
 
-    private TextAsset csvFile;
+    private TextAsset m_csvFile;
 
 
     public enum VertexInputParamType
@@ -250,8 +250,25 @@ public class JCSVImporterWindow : EditorWindow
     }
 
 
-    private VertexData_JCSV setDatas = new VertexData_JCSV();
-    private float scale = 1f;
+    private VertexData_JCSV m_SetDatas = new VertexData_JCSV();
+    private float m_Scale = 1f;
+
+    [MenuItem("Assets/JCSVImporterWindow_AutoImport", priority = 100)]
+    public static void Menu_AutoImport()
+    {
+        Debug.Log("JCSVImporterWindow: Auto Import");
+        Object[] selectedOBJs = Selection.objects;
+        foreach (var selectedOBJ in selectedOBJs)
+        {
+            Debug.Log(selectedOBJ.name);
+            TextAsset csvFileTemp = selectedOBJ as TextAsset;
+            if (csvFileTemp != null)
+            {
+                VertexData_JCSV setDatasTemp = AutoFillInputs(csvFileTemp);
+                StartImport(csvFileTemp, setDatasTemp);
+            }
+        }
+    }
 
     [MenuItem("JTools/J CSV Importer")]
     static void Open()
@@ -272,22 +289,26 @@ public class JCSVImporterWindow : EditorWindow
         DrawALine(3);
         GUILayout.Space(10);
         GUILayout.Label(" BaseSets", headerStyle);
-        csvFile = EditorGUILayout.ObjectField("CSVFile", csvFile, typeof(TextAsset), true, GUILayout.Height(30)) as TextAsset;
-        scale = EditorGUILayout.Slider("Scale", scale, 0.001f, 100f);
+        m_csvFile = EditorGUILayout.ObjectField("CSVFile", m_csvFile, typeof(TextAsset), true, GUILayout.Height(30)) as TextAsset;
+        m_Scale = EditorGUILayout.Slider("Scale", m_Scale, 0.001f, 100f);
         EditorGUILayout.LabelField("Primitive Topology: TrangleList", richTextStyle_Left);
 
-        if (csvFile == null)
+        if (m_csvFile == null)
         {
             GUI.enabled = false;
         }
         // 自动搜索文件格式填充Inputs
         if (GUILayout.Button("Auto Fill Inputs", GUILayout.Height(30)))
         {
-            AutoFillInputs();
+            var newSetDatas = AutoFillInputs(m_csvFile);
+            if (newSetDatas != null)
+            {
+                m_SetDatas = newSetDatas;
+            }
         }
         if (GUILayout.Button("Import ! ", GUILayout.Height(60)))
         {
-            StartImport();
+            StartImport(m_csvFile, m_SetDatas, m_Scale);
         }
         GUI.enabled = true;
 
@@ -297,13 +318,13 @@ public class JCSVImporterWindow : EditorWindow
         GUILayout.Label(" Inputs", headerStyle);
         scrollPos_Inputs = EditorGUILayout.BeginScrollView(scrollPos_Inputs);
 
-        if (setDatas.vertexInputs.Count == 0)
+        if (m_SetDatas.vertexInputs.Count == 0)
         {
-            setDatas.AddNewInput();
+            m_SetDatas.AddNewInput();
         }
-        for (int i = 0; i < setDatas.vertexInputs.Count; i++)
+        for (int i = 0; i < m_SetDatas.vertexInputs.Count; i++)
         {
-            var inputParam1 = setDatas.vertexInputs[i];
+            var inputParam1 = m_SetDatas.vertexInputs[i];
             EditorGUI.indentLevel++;
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Input[" + i + "]    <color=blue>" + inputParam1.ParamType.ToString() + "</color>", richTextStyle_Left, GUILayout.Width(120));
@@ -312,7 +333,7 @@ public class JCSVImporterWindow : EditorWindow
                 GUI.enabled = false;
             if (GUILayout.Button("-", GUILayout.Width(20)))
             {
-                setDatas.vertexInputs.RemoveAt(i);
+                m_SetDatas.vertexInputs.RemoveAt(i);
                 Repaint();
             }
             GUI.enabled = true;
@@ -323,7 +344,7 @@ public class JCSVImporterWindow : EditorWindow
             //GUI.enabled = true;
             if (newParamType != inputParam1.ParamType)
             {
-                setDatas.ChangeInputParamType(i, newParamType);//try change param type.
+                m_SetDatas.ChangeInputParamType(i, newParamType);//try change param type.
             }
             var newParamSize = (VertexInputParamSize)EditorGUILayout.EnumPopup("Size: ", inputParam1.ParamSize, GUILayout.Width(250));
             if (newParamSize != inputParam1.ParamSize)
@@ -349,7 +370,7 @@ public class JCSVImporterWindow : EditorWindow
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("Add After This", GUILayout.Width(200)))
             {
-                setDatas.AddNewInput();
+                m_SetDatas.AddNewInput();
             }
             GUILayout.EndHorizontal();
             EditorGUI.indentLevel--;
@@ -365,7 +386,7 @@ public class JCSVImporterWindow : EditorWindow
 
 
 
-    private bool AutoFillOne(VertexData_JCSV _setDatasTemp, string _fillItem, string _fillItemParam)
+    private static bool AutoFillOne(VertexData_JCSV _setDatasTemp, string _fillItem, string _fillItemParam)
     {
         Debug.Log("AutoFillOne " + _fillItem + "," + _fillItemParam);
         VertexInputParamType fillInputParamType = VertexInputParamType.Position;
@@ -423,12 +444,12 @@ public class JCSVImporterWindow : EditorWindow
         _setDatasTemp.vertexInputs.Add(new VertexInputParam(fillInputParamType, fillInputParamSize));
         return true;
     }
-    private void AutoFillInputs()
+    private static VertexData_JCSV AutoFillInputs(TextAsset csvFile)
     {
         if (csvFile == null)
         {
             Debug.LogError("csvFile is null !!!");
-            return;
+            return null;
         }
 
         var path = AssetDatabase.GetAssetPath(csvFile);
@@ -462,7 +483,7 @@ public class JCSVImporterWindow : EditorWindow
             if (splits.Length != 2)
             {
                 Debug.LogError("splits.Length != 2");
-                return;
+                return null;
             }
             string thisItem = splits[0];
             string thisItemParam = splits[1];
@@ -479,14 +500,14 @@ public class JCSVImporterWindow : EditorWindow
                 {
                     if (AutoFillOne(setDatasTemp, lastItem, lastItemParam) == false)
                     {
-                        return;
+                        return null;
                     }
                 }
                 if (i == strList.Count - 1)
                 {
                     if (AutoFillOne(setDatasTemp, thisItem, thisItemParam) == false)
                     {
-                        return;
+                        return null;
                     }
                 }
                 lastItem = thisItem;
@@ -494,13 +515,13 @@ public class JCSVImporterWindow : EditorWindow
             }
         }
 
-        setDatas = setDatasTemp;
-
         sr.Close();
         sr.Dispose();
+
+        return setDatasTemp;
     }
 
-    public void StartImport()
+    public static void StartImport(TextAsset csvFile, VertexData_JCSV setDatas, float scale = 1)
     {
         if (csvFile != null)
         {
@@ -519,7 +540,7 @@ public class JCSVImporterWindow : EditorWindow
                         line = sr.ReadLine();
                         string[] token = line.Split(',');
                         int vidx = int.Parse(token[1]);
-                        if(minIDX == -1 || minIDX > vidx)
+                        if (minIDX == -1 || minIDX > vidx)
                         {
                             minIDX = vidx;
                         }
@@ -750,7 +771,7 @@ public class JCSVImporterWindow : EditorWindow
 
                 if (mesh)
                 {
-                    SaveMeshToAsset(mesh);
+                    SaveMeshToAsset(csvFile, mesh);
                 }
 
             }
@@ -761,7 +782,7 @@ public class JCSVImporterWindow : EditorWindow
         }
     }
 
-    private Vector2 ApplyMultiAndAdd(VertexInputParam _param, Vector2 _value)
+    private static Vector2 ApplyMultiAndAdd(VertexInputParam _param, Vector2 _value)
     {
         Vector2 outValue = Vector2.zero;
         if (_param.ParamSize == VertexInputParamSize.float2)
@@ -775,7 +796,7 @@ public class JCSVImporterWindow : EditorWindow
         }
         return outValue;
     }
-    private Vector3 ApplyMultiAndAdd(VertexInputParam _param, Vector3 _value)
+    private static Vector3 ApplyMultiAndAdd(VertexInputParam _param, Vector3 _value)
     {
         Vector3 outValue = Vector3.zero;
         if (_param.ParamSize == VertexInputParamSize.float3)
@@ -796,7 +817,7 @@ public class JCSVImporterWindow : EditorWindow
         }
         return outValue;
     }
-    private Vector4 ApplyMultiAndAdd(VertexInputParam _param, Vector4 _value)
+    private static Vector4 ApplyMultiAndAdd(VertexInputParam _param, Vector4 _value)
     {
         Vector4 outValue = Vector3.zero;
         if (_param.ParamSize == VertexInputParamSize.float4)
@@ -812,7 +833,7 @@ public class JCSVImporterWindow : EditorWindow
         }
         return outValue;
     }
-    private Color ApplyMultiAndAdd(VertexInputParam _param, Color _value)
+    private static Color ApplyMultiAndAdd(VertexInputParam _param, Color _value)
     {
         Color outValue = Color.black;
         if (_param.ParamType == VertexInputParamType.Color)
@@ -843,7 +864,7 @@ public class JCSVImporterWindow : EditorWindow
         return outValue;
     }
 
-    private void SaveMeshToAsset(Mesh _mesh)
+    private static void SaveMeshToAsset(TextAsset csvFile, Mesh _mesh)
     {
         if (_mesh)
         {
