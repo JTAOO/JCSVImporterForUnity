@@ -1,6 +1,19 @@
 # JCSVImporterForUnity
 A csv (output by Renderdoc) importer tool.
 
+## How to Use (Auto, Quick)
+- Right click your csvFile in `Project` Window and find function `JCSVImporterWindow_AutoImport`, Click it !
+- But make sure your csvFile looks like:
+
+![image](https://github.com/JTAOO/JCSVImporterForUnity/blob/main/Pictures/autoQuick-example-1.png)
+
+![image](https://github.com/JTAOO/JCSVImporterForUnity/blob/main/Pictures/autoQuick-example-2.png)
+
+- Bad Example: (Format like this is not recognized!)
+
+![image](https://github.com/JTAOO/JCSVImporterForUnity/blob/main/Pictures/autoQuick-bad-example-1.png)
+
+
 ## How to Use (Auto)
 - Just Copy `JCSVImporter` folder to your unity project.
 - Open the window by click `Jtools`-`J CSV Importer`.
