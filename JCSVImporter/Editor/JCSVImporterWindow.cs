@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEditor;
 using System.IO;
+using UnityEditor;
+using UnityEngine;
 
 public class JCSVImporterWindow : EditorWindow
 {
@@ -240,7 +240,7 @@ public class JCSVImporterWindow : EditorWindow
             if (existedIndex == -1 || existedIndex == _index)
             {
                 vertexInputs[_index].ParamType = _newParamType;
-                vertexInputs[_index].ParamSize = vertexInputs[_index].ParamSize;//reset.
+                vertexInputs[_index].ParamSize = vertexInputs[_index].ParamSize; //reset.
             }
             else
             {
@@ -340,13 +340,13 @@ public class JCSVImporterWindow : EditorWindow
             EditorGUILayout.EndHorizontal();
             EditorGUI.indentLevel++;
             //if (i == 0) GUI.enabled = false;
-            var newParamType = (VertexInputParamType)EditorGUILayout.EnumPopup("Type: ", inputParam1.ParamType, GUILayout.Width(250));
+            var newParamType = (VertexInputParamType) EditorGUILayout.EnumPopup("Type: ", inputParam1.ParamType, GUILayout.Width(250));
             //GUI.enabled = true;
             if (newParamType != inputParam1.ParamType)
             {
-                m_SetDatas.ChangeInputParamType(i, newParamType);//try change param type.
+                m_SetDatas.ChangeInputParamType(i, newParamType); //try change param type.
             }
-            var newParamSize = (VertexInputParamSize)EditorGUILayout.EnumPopup("Size: ", inputParam1.ParamSize, GUILayout.Width(250));
+            var newParamSize = (VertexInputParamSize) EditorGUILayout.EnumPopup("Size: ", inputParam1.ParamSize, GUILayout.Width(250));
             if (newParamSize != inputParam1.ParamSize)
             {
                 inputParam1.ParamSize = newParamSize;
@@ -474,9 +474,9 @@ public class JCSVImporterWindow : EditorWindow
             Debug.Log(strList[i]);
         }
 
-        string lastItem = "";// like :inPOISITION0
-        string lastItemParam = "";// like :x
-                                  // ignore the VTX and IDX
+        string lastItem = ""; // like :inPOISITION0
+        string lastItemParam = ""; // like :x
+        // ignore the VTX and IDX
         for (int i = 2; i < strList.Count; i++)
         {
             string[] splits = strList[i].Split(new char[] { '.' });
@@ -529,24 +529,13 @@ public class JCSVImporterWindow : EditorWindow
             if (System.IO.Path.GetExtension(path) == ".csv")
             {
                 Dictionary<int, VertexData_JCSV> vertexDic = new Dictionary<int, VertexData_JCSV>();
+                // 用于记录原文件里面的id和输出模型的顶点idx对应
+                // 由于截帧得到的顶点id有可能是从几百开始，而且中间会断id，这里必须作一个映射字典.
+                Dictionary<int, int> vertexDicID = new Dictionary<int, int>();
                 List<int> indexData = new List<int>();
-                int minIDX = -1;//
-                // 找出最小的IDX
-                using (System.IO.StreamReader sr = new System.IO.StreamReader(path))
-                {
-                    string line = sr.ReadLine();
-                    while (!sr.EndOfStream)
-                    {
-                        line = sr.ReadLine();
-                        string[] token = line.Split(',');
-                        int vidx = int.Parse(token[1]);
-                        if (minIDX == -1 || minIDX > vidx)
-                        {
-                            minIDX = vidx;
-                        }
-                    }
-                }
-                using (System.IO.StreamReader sr = new System.IO.StreamReader(path))
+                int idxNew = -1;
+
+                using(System.IO.StreamReader sr = new System.IO.StreamReader(path))
                 {
                     string line = sr.ReadLine();
                     while (!sr.EndOfStream)
@@ -554,11 +543,22 @@ public class JCSVImporterWindow : EditorWindow
                         line = sr.ReadLine();
                         string[] token = line.Split(',');
                         //Debug.Log(line);
-                        int vidx = int.Parse(token[1]);
-                        vidx = vidx - minIDX; // 减去最小的
+                        int vidx_Origin = int.Parse(token[1]);
+                        int vidxNow = -1;
+                        if (vertexDicID.ContainsKey(vidx_Origin))
+                        {
+                            // 从字典里取对应的
+                            vidxNow = vertexDicID[vidx_Origin];
+                        }
+                        else
+                        {
+                            idxNew += 1;
+                            vertexDicID.Add(vidx_Origin, idxNew);
+                            vidxNow = idxNew;
+                        }
 
-                        indexData.Add(vidx);
-                        if (!vertexDic.ContainsKey(vidx))
+                        indexData.Add(vidxNow);
+                        if (!vertexDic.ContainsKey(vidxNow))
                         {
                             int idx = 2;
                             VertexData_JCSV vert = setDatas.Clone();
@@ -585,7 +585,7 @@ public class JCSVImporterWindow : EditorWindow
                                     }
                                 }
                             }
-                            vertexDic[vidx] = vert;
+                            vertexDic[vidxNow] = vert;
                         }
 
                     }
@@ -601,7 +601,7 @@ public class JCSVImporterWindow : EditorWindow
                     var inputParam1 = listDataTemp.vertexInputs[i];
                     if (inputParam1.ParamSize == VertexInputParamSize.float2)
                     {
-                        if (inputParam1.ParamType == VertexInputParamType.Color)//color must use color list.
+                        if (inputParam1.ParamType == VertexInputParamType.Color) //color must use color list.
                         {
                             inputParam1.listColor = new Color[vertCnt];
                         }
@@ -612,7 +612,7 @@ public class JCSVImporterWindow : EditorWindow
                     }
                     else if (inputParam1.ParamSize == VertexInputParamSize.float3)
                     {
-                        if (inputParam1.ParamType == VertexInputParamType.Color)//color must use color list.
+                        if (inputParam1.ParamType == VertexInputParamType.Color) //color must use color list.
                         {
                             inputParam1.listColor = new Color[vertCnt];
                         }
@@ -623,11 +623,11 @@ public class JCSVImporterWindow : EditorWindow
                     }
                     else if (inputParam1.ParamSize == VertexInputParamSize.float4)
                     {
-                        if (inputParam1.ParamType == VertexInputParamType.Color)//color must use color list.
+                        if (inputParam1.ParamType == VertexInputParamType.Color) //color must use color list.
                         {
                             inputParam1.listColor = new Color[vertCnt];
                         }
-                        else if (inputParam1.ParamType == VertexInputParamType.Position || inputParam1.ParamType == VertexInputParamType.Normal)//these use float3 list.
+                        else if (inputParam1.ParamType == VertexInputParamType.Position || inputParam1.ParamType == VertexInputParamType.Normal) //these use float3 list.
                         {
                             inputParam1.listFloat3 = new Vector3[vertCnt];
                         }
@@ -650,9 +650,9 @@ public class JCSVImporterWindow : EditorWindow
                         VertexInputParam vertexHere = listDataTemp.vertexInputs[j];
                         var paramType = vertexHere.ParamType;
                         var sizeType = vertexHere.ParamSize;
-                        if (sizeType == VertexInputParamSize.float2)//float2 be uv or color.
+                        if (sizeType == VertexInputParamSize.float2) //float2 be uv or color.
                         {
-                            if (paramType == VertexInputParamType.Color)//color must use color list.
+                            if (paramType == VertexInputParamType.Color) //color must use color list.
                             {
                                 var listTemp1 = listDataTemp.vertexInputs[j].listColor;
                                 Vector2 ve2 = vert.vertexInputs[j].valueFloat2;
@@ -669,7 +669,7 @@ public class JCSVImporterWindow : EditorWindow
                         }
                         else if (sizeType == VertexInputParamSize.float3)
                         {
-                            if (paramType == VertexInputParamType.Color)//color must use color list.
+                            if (paramType == VertexInputParamType.Color) //color must use color list.
                             {
                                 var listTemp1 = listDataTemp.vertexInputs[j].listColor;
                                 Vector3 ve3 = vert.vertexInputs[j].valueFloat3;
@@ -680,7 +680,7 @@ public class JCSVImporterWindow : EditorWindow
                             {
                                 var listTemp1 = listDataTemp.vertexInputs[j].listFloat3;
                                 listTemp1[i] = vert.vertexInputs[j].valueFloat3;
-                                if (paramType == VertexInputParamType.Position)//position scale
+                                if (paramType == VertexInputParamType.Position) //position scale
                                 {
                                     listTemp1[i] *= scale;
                                 }
@@ -694,7 +694,7 @@ public class JCSVImporterWindow : EditorWindow
                             {
                                 var listTemp1 = listDataTemp.vertexInputs[j].listFloat3;
                                 listTemp1[i] = vert.vertexInputs[j].valueFloat3;
-                                if (paramType == VertexInputParamType.Position)//position scale
+                                if (paramType == VertexInputParamType.Position) //position scale
                                 {
                                     listTemp1[i] *= scale;
                                 }
@@ -702,7 +702,7 @@ public class JCSVImporterWindow : EditorWindow
                             }
                             else
                             {
-                                if (paramType == VertexInputParamType.Color)//color must use color list.
+                                if (paramType == VertexInputParamType.Color) //color must use color list.
                                 {
                                     var listTemp1 = listDataTemp.vertexInputs[j].listColor;
                                     Vector4 ve4 = vert.vertexInputs[j].valueFloat4;
@@ -745,7 +745,7 @@ public class JCSVImporterWindow : EditorWindow
                     {
                         if (paramType >= VertexInputParamType.UV0 && paramType <= VertexInputParamType.UV8)
                         {
-                            int uvChannel = (int)paramType - 10;
+                            int uvChannel = (int) paramType - 10;
                             if (paramSize == VertexInputParamSize.float2)
                             {
                                 mesh.SetUVs(uvChannel, listDataTemp.vertexInputs[i].listFloat2);
@@ -761,13 +761,12 @@ public class JCSVImporterWindow : EditorWindow
                         }
                         else
                         {
-                            Debug.LogError("Unknow param type : [<color=red>" + (int)paramType + "</color>] !!!");
+                            Debug.LogError("Unknow param type : [<color=red>" + (int) paramType + "</color>] !!!");
                         }
                     }
                 }
                 mesh.triangles = indexData.ToArray();
                 mesh.RecalculateBounds();
-                Debug.Log("minIDX:" + minIDX);
 
                 if (mesh)
                 {
@@ -849,7 +848,7 @@ public class JCSVImporterWindow : EditorWindow
                 outValue.g = _value.g * _param.multi_vec3.y + _param.add_vec3.y;
                 outValue.b = _value.b * _param.multi_vec3.z + _param.add_vec3.z;
             }
-            else//float4
+            else //float4
             {
                 outValue.r = _value.r * _param.multi_vec4.x + _param.add_vec4.x;
                 outValue.g = _value.g * _param.multi_vec4.y + _param.add_vec4.y;
